@@ -2,6 +2,14 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Run the the project
+
+- npm install
+- npm start
+- On the web app
+  set the ip where the document graph is hosted and the code/scope 
+- click update
+
 ## Available Scripts
 
 In the project directory, you can run:
