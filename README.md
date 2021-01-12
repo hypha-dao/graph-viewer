@@ -2,6 +2,19 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Run the the project
+
+- npm install
+- npm start
+- On the web app
+  set the ip where the document graph is hosted and the code/scope 
+- click update
+
+## Usage
+
+- Click a node to load it's connections and watch it's content
+- Ctrl + click to watch a node content with out losing all the current nodes
+
 ## Available Scripts
 
 In the project directory, you can run:
