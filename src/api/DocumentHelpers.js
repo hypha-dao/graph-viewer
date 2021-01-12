@@ -34,9 +34,23 @@ export const getGroup = (document, groupLabel) => {
 //parent item
 export const nameItems = (group) => {
   const newGroup = {};
+  let repeatedIdx = {};
   for (const content of group) {
     if (content.label !== 'content_group_label') {
-      newGroup[content.label] = content.value[1];
+      if (newGroup.hasOwnProperty(content.label)) {
+
+        if (repeatedIdx.hasOwnProperty(content.label)) {
+          ++repeatedIdx[content.label];
+        }
+        else {
+          repeatedIdx[content.label] = 1;
+        }
+
+        newGroup[`${content.label}_${repeatedIdx[content.label]}`] = content.value[1];
+      }
+      else {
+        newGroup[content.label] = content.value[1];
+      }
     }
   }
 

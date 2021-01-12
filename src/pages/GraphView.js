@@ -57,8 +57,9 @@ class GraphView extends Component
 
     this.config = {
       nodesLimit: 100,
+      edgesLimit: 1000,
       serverUrl: 
-      'http://8573f946c9d0.ngrok.io'
+      'http://513f67fc2f65.ngrok.io'
       ,
     }
 
@@ -155,7 +156,7 @@ class GraphView extends Component
 
       set_url(url);
 
-      const nodesData = await get_table(code, code, 'documents', 100);
+      const nodesData = await get_table(code, code, 'documents', this.config.nodesLimit);
 
       let nodes = []; 
 
@@ -183,15 +184,20 @@ class GraphView extends Component
 
       this.setState({ graph: { ...this.state.graph, nodes: nodes } });
 
-      const edgesData = await get_table(code, code, 'edges', 100)
+      const edgesData = await get_table(code, code, 'edges', this.config.edgesLimit)
+
+      console.log(edgesData);
       
       let edges = [];
 
       edgesData.rows.forEach(edge => {
-        edges.push({from: this.byhash[edge.from_node], 
-                    to: this.byhash[edge.to_node], 
-                    label: edge.edge_name, 
-                    origin: edge});
+        if (this.byhash.hasOwnProperty(edge.from_node) && 
+            this.byhash.hasOwnProperty(edge.to_node)) {
+          edges.push({from: this.byhash[edge.from_node], 
+            to: this.byhash[edge.to_node], 
+            label: edge.edge_name, 
+            origin: edge});
+        }
       });
 
       this.setState({ graph: { ...this.state.graph, edges: edges }});
@@ -248,7 +254,7 @@ class GraphView extends Component
           style={{
             minWidth: "100%", 
             maxWidth: "100%",
-            height: '100%'
+            minHeight: "100%"
           }} 
           src={currentNode} />
       </div>
