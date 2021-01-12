@@ -183,7 +183,7 @@ class GraphView extends Component
 
       this.setState({ graph: { ...this.state.graph, nodes: nodes } });
 
-      const edgesData = await get_table('accounting', 'accounting', 'edges', 100)
+      const edgesData = await get_table(code, code, 'edges', 100)
       
       let edges = [];
 
