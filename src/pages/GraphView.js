@@ -148,7 +148,7 @@ class GraphView extends Component
 
   loadData = async (url, code = 'accounting') => {
 
-    console.log(url, code);
+    console.log("getting data", this.config.nodesLimit);
 
     try {
 
@@ -156,52 +156,81 @@ class GraphView extends Component
 
       set_url(url);
 
-      const nodesData = await get_table(code, code, 'documents', this.config.nodesLimit);
+      let nextNode;
 
       let nodes = []; 
 
-      nodesData.rows.forEach((node, idx) => {
+      while (true) {
 
-        this.byhash[node.hash] = idx;
+        let limit = this.config.nodesLimit - nodes.length;
 
-        let label = node.hash.substr(0, 5);
+        const {more, rows, next_key} = await get_table(code, code, 'documents', limit, nextNode);
 
-        const system = getGroup(node, "system");
+        console.log(rows);
 
-        if (system) {
-          
-          const name = getContent(system, "node_label");
-          
-          if (name) {
-            label = name.value[1];
+        rows.forEach((node) => {
+
+          const idx = nodes.length;
+
+          this.byhash[node.hash] = idx;
+
+          let label = node.hash.substr(0, 5);
+
+          const system = getGroup(node, "system");
+
+          if (system) {
+            
+            const name = getContent(system, "node_label");
+            
+            if (name) {
+              label = name.value[1];
+            }
           }
+
+          node = nameGroups(node);
+
+          nodes.push({id: idx, label: label, data: node});
+        });
+
+        if (!more || nodes.length >= this.config.nodesLimit) {
+          break;
         }
 
-        node = nameGroups(node);
+        nextNode = next_key;
+      }
 
-        nodes.push({id: idx, label: label, data: node});
-      });
-
-      this.setState({ graph: { ...this.state.graph, nodes: nodes } });
-
-      const edgesData = await get_table(code, code, 'edges', this.config.edgesLimit)
-
-      console.log(edgesData);
+      let nextEdge;
       
       let edges = [];
+      
+      while (true) {
 
-      edgesData.rows.forEach(edge => {
-        if (this.byhash.hasOwnProperty(edge.from_node) && 
-            this.byhash.hasOwnProperty(edge.to_node)) {
-          edges.push({from: this.byhash[edge.from_node], 
-            to: this.byhash[edge.to_node], 
-            label: edge.edge_name, 
-            origin: edge});
+        let limit = this.config.edgesLimit - edges.length;
+
+        const { rows, more, next_key } = await get_table(code, code, 'edges', limit, nextEdge)
+
+        rows.forEach(edge => {
+          if (this.byhash.hasOwnProperty(edge.from_node) && 
+              this.byhash.hasOwnProperty(edge.to_node)) {
+            edges.push({from: this.byhash[edge.from_node], 
+              to: this.byhash[edge.to_node], 
+              label: edge.edge_name, 
+              origin: edge});
+          }
+        });
+
+        if (!more || edges.length >= this.config.edgesLimit) {
+          break;
         }
-      });
 
-      this.setState({ graph: { ...this.state.graph, edges: edges }});
+        nextEdge = next_key;
+      }
 
+      console.log(edges.length);
+
+      this.setState({ graph: { nodes: nodes, edges: edges }});
+
+      this.state.network.redraw();
     }
     catch(error) {
       console.log("Error while getting nodes data:", error);
@@ -211,8 +240,6 @@ class GraphView extends Component
   componentDidMount() {
 
     window.addEventListener('resize', this.resize);
-    
-    this.loadData(this.config.serverUrl);
   }
 
   componentWillUnmount() {
@@ -233,7 +260,10 @@ class GraphView extends Component
         defaultUrl={serverUrl}
         className='options-container' 
         onUrlUpdate={this.loadData}
-        onDepthChange={this.depthChange}/>
+        onDepthChange={this.depthChange}
+        onMaxNodesChange={val => this.config.nodesLimit = val}
+        onMaxEdgesChange={val => this.config.edgesLimit = val}
+        />
       <div className="graph-canvas">
       <Graph
         graph={renderGraph}

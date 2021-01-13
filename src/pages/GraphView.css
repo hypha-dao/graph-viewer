@@ -18,9 +18,10 @@
   transition: all 1s;
   width: 22%;
   overflow-x: hidden;
-  min-height: 100%;
   transform: translateX(100%);
   right: 0;
+  top: 0;
+  bottom: 0;
 }
 
 .options-container {
