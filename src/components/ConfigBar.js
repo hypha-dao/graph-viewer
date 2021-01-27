@@ -38,7 +38,7 @@ const ConfigBar = ({defaultUrl,
       <input
         style={{marginRight: 5, padding: 5}}
         ref={code}
-        defaultValue={'accounting'}
+        defaultValue={process.env.REACT_APP_DEFAULT_CODE}
         placeholder='Code'/>
 
       <button onClick={() => onUrlUpdate(url.current.value, code.current.value)}>update</button>

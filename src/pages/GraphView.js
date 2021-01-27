@@ -58,9 +58,7 @@ class GraphView extends Component
     this.config = {
       nodesLimit: 100,
       edgesLimit: 1000,
-      serverUrl: 
-      'http://513f67fc2f65.ngrok.io'
-      ,
+      serverUrl: process.env.REACT_APP_DEFAULT_SERVER,
     }
 
     this.currentDepth = 1;
