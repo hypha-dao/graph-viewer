@@ -15,7 +15,7 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import { withStyles } from '@material-ui/core';
 
-const styles = theme => ({
+const styles = theme => { console.log(theme); return {
   drawerHeader: {
     display: 'flex',
     padding: theme.spacing(0, 1),
@@ -23,8 +23,16 @@ const styles = theme => ({
   },
   drawerButton: {
     marginRight: theme.spacing(2)
+  },
+  toolbar: theme.mixins.toolbar,
+  contentContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    flex: 1,
+    position: 'relative'
   }
-})
+}
+}
 
 const options = {
   physics: {
@@ -148,11 +156,11 @@ class GraphView extends Component
   }
 
   getEdges = data => {
-    console.log("getEdges:", data);
+    //console.log("getEdges:", data);
   }
 
   getNodes = data => {
-    console.log("getNodes:", data);
+    //console.log("getNodes:", data);
   }
 
   resize = data => {
@@ -171,7 +179,17 @@ class GraphView extends Component
 
     const { url, code, maxNodes, maxEdges } = this.config;
 
-    this.setState({loadingNodes: true});
+    console.log('loading from url', url);
+
+    this.byhash = {};
+
+    //Cleaunp old state
+    this.setState({ 
+      customView: null,
+      loadingNodes: true, 
+      graph: { nodes: [], edges: [] }, 
+      currentNode: undefined 
+    });
 
     try {
 
@@ -188,8 +206,6 @@ class GraphView extends Component
         let limit = maxNodes - nodes.length;
 
         const {more, rows, next_key} = await get_table(code, code, 'documents', limit, nextNode);
-
-        console.log(rows);
 
         rows.forEach((node) => {
 
@@ -249,17 +265,15 @@ class GraphView extends Component
         nextEdge = next_key;
       }
 
-      console.log(edges.length);
-
       this.setState({ graph: { nodes: nodes, edges: edges }});
 
       this.state.network.redraw();
     }
     catch(error) {
-      console.log("Error while getting nodes data:", error);
+      console.error("Error while getting nodes data:", error);
     }
     finally {
-      this.setState({loadingNodes: false})
+      this.setState({ loadingNodes: false })
     }
   }
 
@@ -285,8 +299,8 @@ class GraphView extends Component
 
     return (
     <div className="app-container">
+      <div className={classes.toolbar}></div>
       <AppBar
-        position='fixed'
       >
         <ToolBar>
           <IconButton
@@ -325,29 +339,31 @@ class GraphView extends Component
           onDepthChange={this.depthChange}
         />
       </Drawer>
-      <div className="graph-canvas">
-      <Graph
-        graph={renderGraph}
-        options={options}
-        style={this.state.style}
-        events={this.events}
-        getNetwork={this.getNetwork}
-        getEdges={this.getEdges}
-        getNodes={this.getNodes}
-        vis={vis => (this.vis = vis)}/>
-      </div>
-      <div
-        className={`json-container ${currentNode && 'container-show'}`}
-      >
-        <ReactJson
-          displayDataTypes={false}
-          theme='monokai'
-          style={{
-            minWidth: "100%", 
-            maxWidth: "100%",
-            minHeight: "100%"
-          }} 
-          src={currentNode} />
+      <div className={classes.contentContainer}> 
+        <div className="graph-canvas">
+        <Graph
+          graph={renderGraph}
+          options={options}
+          style={this.state.style}
+          events={this.events}
+          getNetwork={this.getNetwork}
+          getEdges={this.getEdges}
+          getNodes={this.getNodes}
+          vis={vis => (this.vis = vis)}/>
+        </div>
+        <div
+          className={`json-container ${currentNode && 'container-show'}`}
+        >
+          <ReactJson
+            displayDataTypes={false}
+            theme='monokai'
+            style={{
+              minWidth: "100%", 
+              maxWidth: "100%",
+              minHeight: "100%"
+            }} 
+            src={currentNode} />
+        </div>
       </div>
     </div>)
   }

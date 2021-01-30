@@ -3,6 +3,7 @@
   height: 100%;
   display: flex;
   overflow: hidden;
+  flex-direction: column;
 }
 
 .graph-canvas {
@@ -16,9 +17,9 @@
 .json-container {
   position: absolute;
   transition: all 1s;
-  width: 22%;
+  width: 0;
   overflow-x: hidden;
-  transform: translateX(100%);
+  /* transform: translateX(100%); */
   right: 0;
   top: 0;
   bottom: 0;
@@ -41,6 +42,7 @@
 }
 
 .container-show {
-  transform: translateX(0);
+  /* transform: translateX(0); */
+  width: 22%;
 }
 

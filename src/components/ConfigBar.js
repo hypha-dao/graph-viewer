@@ -144,12 +144,12 @@ const ConfigBar = ({configData,
       <TextField
         className={classes.url}
         defaultValue={configData.url}
-        onChange={v => configData.url = v}
+        onChange={({target}) => configData.url = target.value}
         label='Remote server'/>  
       <TextField
         className={classes.code}
         defaultValue={configData.code}
-        onChange={v => configData.code = v}
+        onChange={({target}) => configData.code = target.value}
         label='Code'/>
     </Flexbox>
     <Flexbox 
@@ -162,6 +162,7 @@ const ConfigBar = ({configData,
         max={1000000}
         step={100}
         onChange={v => {
+          console.log(v);
           configData.maxNodes = v;
           onMaxNodesChange && onMaxNodesChange(v);
         }}
