@@ -5,7 +5,26 @@ import './GraphView.css';
 import ReactJson from 'react-json-view'
 import { getEdgesCommingFrom, getEdgesGoingTo } from '../api/NodesFilters';
 import { getContent, getGroup, nameGroups } from '../api/DocumentHelpers';
-import ConfigBar from '../components/ConfigBar';
+import ConfigBar, { ConfigData } from '../components/ConfigBar';
+import Drawer from '@material-ui/core/Drawer';
+import AppBar from '@material-ui/core/AppBar';
+import IconButton from '@material-ui/core/IconButton'
+import ToolBar from '@material-ui/core/Toolbar'
+import Typography from '@material-ui/core/Typography'
+import SettingsIcon from '@material-ui/icons/Settings';
+import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
+import { withStyles } from '@material-ui/core';
+
+const styles = theme => ({
+  drawerHeader: {
+    display: 'flex',
+    padding: theme.spacing(0, 1),
+    justifyContent: 'flex-end'
+  },
+  drawerButton: {
+    marginRight: theme.spacing(2)
+  }
+})
 
 const options = {
   physics: {
@@ -48,20 +67,25 @@ class GraphView extends Component
     super(props);
 
     this.state = {
+      //Stores the whole graph
+      //up to nodesLimit & edgesLimit
       graph: { nodes: [], edges: [] },
+      //Stores a partial view of the whole graph
       customView: null,
       style: { width: "100%", height: "100%" },
       network: null,
       currentNode: undefined,
+      configBarOpen: false,
+      loadingNodes: false,
     }
 
-    this.config = {
-      nodesLimit: 100,
-      edgesLimit: 1000,
-      serverUrl: process.env.REACT_APP_DEFAULT_SERVER,
-    }
-
-    this.currentDepth = 1;
+    this.config = new ConfigData ({
+      defaultMaxNodes: 100,
+      defaultMaxEdges: 1000,
+      defaultDepth: 2,
+      defaultCode: process.env.REACT_APP_DEFAULT_CODE,
+      defaultURL: process.env.REACT_APP_DEFAULT_SERVER,
+    });
 
     this.byhash = {};
     this.events = {
@@ -81,7 +105,7 @@ class GraphView extends Component
 
           this.viewID = e.nodes[0];
 
-          this.filterNodes(this.currentDepth, e.nodes[0], this.viewID, ctrlKey);
+          this.filterNodes(this.config.searchDepth, e.nodes[0], this.viewID, ctrlKey);
           //this.state.network.redraw();
         }
       }
@@ -136,17 +160,18 @@ class GraphView extends Component
     this.state.network.fit();
   }
 
-  depthChange = (newDepth) => {
-    this.currentDepth = newDepth;
+  depthChange = () => {
     const { currentNode } = this.state;
     if (currentNode) {
-      this.filterNodes(newDepth, this.filterID, this.viewID);
+      this.filterNodes(this.config.searchDepth, this.filterID, this.viewID);
     }
   }
 
-  loadData = async (url, code = 'accounting') => {
+  loadData = async () => {
 
-    console.log("getting data", this.config.nodesLimit);
+    const { url, code, maxNodes, maxEdges } = this.config;
+
+    this.setState({loadingNodes: true});
 
     try {
 
@@ -160,7 +185,7 @@ class GraphView extends Component
 
       while (true) {
 
-        let limit = this.config.nodesLimit - nodes.length;
+        let limit = maxNodes - nodes.length;
 
         const {more, rows, next_key} = await get_table(code, code, 'documents', limit, nextNode);
 
@@ -190,7 +215,7 @@ class GraphView extends Component
           nodes.push({id: idx, label: label, data: node});
         });
 
-        if (!more || nodes.length >= this.config.nodesLimit) {
+        if (!more || nodes.length >= maxNodes) {
           break;
         }
 
@@ -203,7 +228,7 @@ class GraphView extends Component
       
       while (true) {
 
-        let limit = this.config.edgesLimit - edges.length;
+        let limit = maxEdges - edges.length;
 
         const { rows, more, next_key } = await get_table(code, code, 'edges', limit, nextEdge)
 
@@ -217,7 +242,7 @@ class GraphView extends Component
           }
         });
 
-        if (!more || edges.length >= this.config.edgesLimit) {
+        if (!more || edges.length >= maxEdges) {
           break;
         }
 
@@ -233,6 +258,9 @@ class GraphView extends Component
     catch(error) {
       console.log("Error while getting nodes data:", error);
     }
+    finally {
+      this.setState({loadingNodes: false})
+    }
   }
 
   componentDidMount() {
@@ -246,22 +274,57 @@ class GraphView extends Component
 
   render() {
    
-    const { graph, customView, currentNode } = this.state;
+    const { classes } = this.props; 
 
-    const { serverUrl } = this.config;
-    
+    const { graph, customView, currentNode, configBarOpen,
+            loadingNodes } = this.state;
+
     const renderGraph = customView ?? graph;
+
+    //const { maxNodes, maxEdges }
 
     return (
     <div className="app-container">
-      <ConfigBar
-        defaultUrl={serverUrl}
-        className='options-container' 
-        onUrlUpdate={this.loadData}
-        onDepthChange={this.depthChange}
-        onMaxNodesChange={val => this.config.nodesLimit = val}
-        onMaxEdgesChange={val => this.config.edgesLimit = val}
+      <AppBar
+        position='fixed'
+      >
+        <ToolBar>
+          <IconButton
+            color='inherit'
+            size='medium'
+            className={classes.drawerButton}
+            onClick={()=>this.setState({configBarOpen: true})}>
+            <SettingsIcon 
+            />
+          </IconButton>
+          <Typography
+            noWrap
+            variant="h6"
+          >
+            DHO Graph Viewer
+          </Typography>
+        </ToolBar>
+      </AppBar>
+      <Drawer
+        variant='persistent'
+        open={configBarOpen}
+        anchor='left'
+      >
+        <div className={classes.drawerHeader}>
+          <IconButton
+            onClick={()=>this.setState({configBarOpen: false})}
+          >
+            <ArrowBackIosIcon/>
+          </IconButton>
+        </div>
+        <ConfigBar
+          className='options-container' 
+          fetchingData={loadingNodes}
+          configData={this.config}
+          onUpdate={this.loadData}
+          onDepthChange={this.depthChange}
         />
+      </Drawer>
       <div className="graph-canvas">
       <Graph
         graph={renderGraph}
@@ -290,4 +353,6 @@ class GraphView extends Component
   }
 }
 
-export default GraphView;
+
+
+export default withStyles(styles)(GraphView);

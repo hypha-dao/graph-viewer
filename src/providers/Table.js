@@ -1,13 +1,8 @@
 import { JsonRpc } from 'eosjs'
 
-let url = `
-http://92d638329361.ngrok.io
-`;
-
-let rpc = new JsonRpc(url)
+let rpc;
 
 export const set_url = (url) => {
-  url = url;
   rpc = new JsonRpc(url);
 }
 
