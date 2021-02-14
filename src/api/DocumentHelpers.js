@@ -34,9 +34,23 @@ export const getGroup = (document, groupLabel) => {
 //parent item
 export const nameItems = (group) => {
   const newGroup = {};
+  let repeatedIdx = {};
   for (const content of group) {
     if (content.label !== 'content_group_label') {
-      newGroup[content.label] = content.value[1];
+      if (newGroup.hasOwnProperty(content.label)) {
+
+        if (repeatedIdx.hasOwnProperty(content.label)) {
+          ++repeatedIdx[content.label];
+        }
+        else {
+          repeatedIdx[content.label] = 1;
+        }
+
+        newGroup[`${content.label}_${repeatedIdx[content.label]}`] = content.value[1];
+      }
+      else {
+        newGroup[content.label] = content.value[1];
+      }
     }
   }
 
@@ -48,7 +62,7 @@ export const nameItems = (group) => {
 //parent item in JSON or use a default group_N name
 export const nameGroups = (node) => {
   
-  let newNode = { creator: node.creator, hash: node.hash, content_groups: {} };
+  let newNode = { creator: node.creator, date: node.created_date, hash: node.hash, content_groups: {} };
   //Iterate groups
   for (let i = 0; i < node.content_groups.length; ++i) {
     const groupLabel = getGroupLabel(node.content_groups[i]);

@@ -1,11 +1,24 @@
+import { blue } from '@material-ui/core/colors';
+import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import GraphView from './pages/GraphView';
 import reportWebVitals from './reportWebVitals';
 
+const theme = createMuiTheme({
+  palette: {
+    primary: {
+      main: blue[500],
+      contrastText: '#fff',
+    },
+  },
+});
+
 ReactDOM.render(
-  <GraphView/>,
+  <ThemeProvider theme={theme}>
+    <GraphView/>
+  </ThemeProvider>,
   document.getElementById('root')
 );
 
